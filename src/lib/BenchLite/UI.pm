@@ -131,20 +131,20 @@ sub _eval_plot {
 
   my ($self, $plot, $plot_num) = @_;
 
-  if($plot =~ /%Plot:(.*)/){
-    my $c = $1;
-    $self->_parse_desc($c, $plot_num, "plot", "runtime");
-    $self->_parse_desc($c, $plot_num, "plot", "memory");
-    $self->_parse_desc($c, $plot_num, "plot", "disc");
-  }elsif($plot =~ /%PlotRuntime:(.*)/){
-    my $c = $1;
-    $self->_parse_desc($c, $plot_num, "plot", "runtime");
-  }elsif($plot =~ /%PlotDisc:(.*)/){
-    my $c = $1;
-    $self->_parse_desc($c, $plot_num, "plot", "disc");
-  }elsif($plot =~ /%PlotMemory:(.*)/){
-    my $c = $1;
-    $self->_parse_desc($c, $plot_num, "plot", "memory");
+  if($plot =~ /%Plot:(.*?):(.*)/){
+    my ($query,$name) = ($1,$2);
+    $self->_parse_desc($query, $plot_num, "plot", "runtime",$name);
+    $self->_parse_desc($query, $plot_num, "plot", "memory",$name);
+    $self->_parse_desc($query, $plot_num, "plot", "disc",$name);
+  }elsif($plot =~ /%PlotRuntime:(.*?):(.*)/){
+    my ($query,$name) = ($1,$2);
+    $self->_parse_desc($query, $plot_num, "plot", "runtime", $name);
+  }elsif($plot =~ /%PlotDisc:(.*?):(.*)/){
+    my ($query,$name) = ($1,$2);
+    $self->_parse_desc($query, $plot_num, "plot", "disc", $name);
+  }elsif($plot =~ /%PlotMemory:(.*?):(.*)/){
+    my ($query,$name) = ($1,$2);
+    $self->_parse_desc($query, $plot_num, "plot", "memory", $name);
   }else{
     die "$plot : Not a proper plot syntax!";
   }
@@ -188,7 +188,7 @@ sub _eval_label {
 
 
 sub _parse_desc {
-  my ($self,  $desc, $i, $cmd, $what) = @_;
+  my ($self,  $desc, $i, $cmd, $what, $name) = @_;
 
   $desc =~ s/ //g;
   my @mtx = ();
@@ -208,6 +208,7 @@ sub _parse_desc {
   if ($cmd eq "plot"){
     my $mtx = BenchLite::Stats::Matrix->new();
     push(@{$self->{_script_}->{$cmd}->{$what}->{$i}} ,@{$mtx->make_2d_matrix(@mtx)});
+    $self->{_script_}->{"plot_name"}->{$what}->{$i} = $name;
   }
 
 

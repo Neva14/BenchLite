@@ -7,7 +7,13 @@ README
 doc/BenchLite.pdf
 src/apps/check.pl
 src/apps/Bench.pl
-src/lib/Bench/BenchLite.pm
+src/lib/BenchLite/Core.pm
+src/lib/BenchLite/UI.pm
+src/lib/BenchLite/Stats/Summary.pm
+src/lib/BenchLite/Stats/Matrix.pm
+src/lib/BenchLite/Plots/Disc.pm
+src/lib/BenchLite/Plots/Runtime.pm
+src/lib/BenchLite/Plots/Memory.pm
 src/t/00-load.t
 src/t/01-Bench.t
 src/t/02-Plot.t

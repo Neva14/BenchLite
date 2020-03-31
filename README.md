@@ -4,33 +4,117 @@
 
 Simple CLI benchmarking tool
 
+Note: Major code rewriting required!
+
 # Synopsis
 
-	Usage:
+To install & run:
 
-	-p	Testing ... (file.bench)  : file containing a list of cmd's to be benchmarked
-	-l	Log file                  : file containing execution logs
-	-o	output                    : directory contiaining outputs of each tool together with detailed benchmark statistics
-	-b	bootstrap                 : the number of times a measurments are to be repeated
-	-d	Delta T in sec            : timeframe in which memory consumption should be recorded
-	-i	Session Id                : benchmark session identifier segregating different benchmarkings within the same framework
-	-f	Monitor flags             : CLI options to be monitored (currently only those taking files are subjected to filesize measurments)
+0. Download:    
+
+   `git clone https://github.com/RobertBakaric/BenchLite.git`
+
+1. Unpack the BenchLite package (BenchLite-XXX.tar.gz):   
+
+   `tar -xvzf BenchLite-XXX.tar.gz`
+
+2. Change the current directory to BenchLite-XXX:   
+
+   `cd BenchLite-XXX/`
+
+3. Build the program for your system:   
+
+   `perl Build.PL`
+
+4. Compile the program:   
+
+   `make`
+
+5. Test:   
+
+   `make test`
+
+6. Install the program:   
+
+	`(sudo) make install`
+
+
+7. Execute:
+
+```
+  ./src/apps/bench.pl -h
+
+  Usage:
+
+	-i	Input script [*.bench]
+	-o	Output table [tsv]
+	-b	Number of times to repeat a given measurment
+	-d	Time interval for memory snaps [in sec]
+	-e	Print out bench template
+
+
+		Execution example
+		bench -o MyResults.tsv -b 3 -d 2 -i my.bench
+```
+
+Bench script example:   
+
+```
+# Plot definition:
+#Function:-------Tag,------Tag-:-PlotTitle----------------#
+
+%TagClasses:    Tool,     NGS
+#---------------------------------------------------------#
+%PlotRuntime:  T1/T2,      -  : First
+%PlotRuntime:     T1,   HiSeq : Second
+%PlotDisc:        T1,      -  : Tool1
+%PlotDisc:        T2, NovaSeq : Tool2
+%PlotMemory:   T1/T2,      -  : Memory
+
+
+
+%FlagClasses: In, Out
+#---------------------------------------------------------#
+#
+# Aplications:
+
+# app:1
+#---------------------------------------------------------#
+
+%Tags:   T1, HiSeq
+%Flags:   -i,>
+
+perl tool1.pl -i in -x 100  > out.1
+#---------------------------------------------------------#
+
+# app:2
+#---------------------------------------------------------#
+
+%Tags:   T2, NovaSeq
+%Flags:   -i,-o
+
+
+tool2  -x 100 -i in -o out.1
+#---------------------------------------------------------#
+
+```
+
 
 
 # Description
 
-	Benchmarking is the practice of comparing processes and performance metrics to
-	industry standard best practice solutions. Parameters typically considered
-	within a measurment process are:
+Benchmarking is the practice of comparing processes and performance metrics to
+industry standard best practice solutions. Parameters typically considered
+during measurement process are:
 
-		a) quality of the resulting output,
-		b) execution time
-		c) memory usage
-		d) disc usage
+a) quality of the resulting output,
+b) execution time
+c) memory usage
+d) disc usage
 
-	"bench" is a simple cli application that utilizes all of the above stated quantifiations
-	schemas and crunches out a simple descriptive statistical summary for a set of measurments
-	obtained from direct cli app executions
+"bench" is a simple cli application that utilizes all of the above stated quantifiations
+schemas and crunches out a simple descriptive statistical summary for a set of measurements
+obtained from direct cli app executions
 
 # Author
 
@@ -57,5 +141,21 @@ Simple CLI benchmarking tool
 	#  along with this program; if not, write to the Free Software
 	#  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 	#  MA 02110-1301, USA.
-	#  
-	#
+
+
+# TODO
+
+1. break big methods
+2. write documentation
+3. write POD
+4. finish shell
+5. finish get()
+6. rewrite the Core
+7. reorganize the code to achieve better modularity
+9. fix png plot
+10. write latex extension
+11. finish Buld.PL
+12. add PCA analysis
+13. replace regex parser with a proper interpreter
+14. replace fork with thread
+99. etc.

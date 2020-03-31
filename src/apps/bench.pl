@@ -15,45 +15,48 @@ use BenchLite::Core;
 my $bench = BenchLite::Core->new();
 
 #---------------------------------------------------------#
-#                      CLI
+#                        CLI
 #---------------------------------------------------------#
 
-my ($help, $script, $logfile, $out, $boot, $deltaT, $id, $flags, $quite);
-GetOptions ("p=s" => \$script,
+my ($help,$script,$out,$boot,$deltaT,$example);
+
+GetOptions ("i=s" => \$script,
             "h" => \$help,
-            "l=s" => \$logfile,
             "o=s" => \$out,
             "b=i" => \$boot,
             "d=i" => \$deltaT,
-            "i=s" => \$id,
-            "f=s" => \$flags,
-            "q"  => \$quite
+            "e"  => \$example
             );
 
 if($help  || !$script ){
   print "Usage:\n\n";
-  print "\t-p\tTesting ... (file.bench)\n";
-  print "\t-l\tLog file\n";
-  print "\t-o\toutput\n";
-  print "\t-b\tbootstrap\n";
-  print "\t-d\tDelta T in sec\n";
-  print "\t-i\tSession Id\n";
-  print "\t-f\tMonitor flags\n";
-  print "\n\nExample *.bench file :\n";
-  print "#Tool -> line not read because of #\n";
-  print "tool -i in -o out \n";
-  print "tool2 -i in2 -o out2 \n";
-  print "\n\nExecute:\n";
-  print "bench -f \"-i -o\" -l My_Log_Date -o My_Bench_Out -b 10 -d 10 -s 1  -p my.bench\n";
+  print "\t-i\tInput script [*.bench]\n";
+  print "\t-o\tOutput table [tsv]\n";
+  print "\t-b\tNumber of times to repeat a given measurment\n";
+  print "\t-d\tTime interval for memory snaps [in sec]\n";
+  print "\t-e\tPrint out bench template\n";
+  print "\n\nExecution example\n";
+  print "bench -o MyResults.tsv -b 3 -d 2 -i my.bench\n";
+  exit(0);
+}
 
+if ($example){
+  print_example();
   exit(0);
 }
 
 #---------------------------------------------------------#
-#                     Set defaults
+#                     pre-check
 #---------------------------------------------------------#
 
+# set the number of benchmark repetitions
 $boot = 1 unless $boot;
+
+# define output if not set it prints to stdout
+my $ofh ;
+if ($out){
+  open ($ofh, ">", $out) || die "$!";
+}
 
 # bootstrap mode set to 0 means only a single cmd execution will be preformed
 $bench->{_bootstrap_} = $boot;
@@ -63,14 +66,86 @@ $bench->{_output_} = "./Benchmarks";
 $bench->{_log_} = "Bench.log";
 $bench->{_delta_} = 1;
 
+
+#---------------------------------------------------------#
+#                         main
+#---------------------------------------------------------#
+
 # execute *.bench script
 $bench->benchmark($script);
 
 # get benchmark results
 my $table  = $bench->get_summary_stats();
 my $logic  = $bench->get_plot_logic();
-print Dumper($table);
 
-$bench->plot($logic, $table);
+# plot results (currently plots all formats)
+my $plot_data = $bench->plot($logic, $table);
 
-print "INside  \n";
+# print out data used for plotting
+foreach my $line (@{$plot_data}){
+  my $skip = ($line->[0] eq 'TableName') ? ("\n") : ("");
+  if ($out){
+    print $ofh "$skip". join("\t", @{$line}) . "\n";
+  }else{
+    print "$skip". join("\t", @{$line}) . "\n";
+  }
+}
+
+
+#---------------------------------------------------------#
+#                      post-check
+#---------------------------------------------------------#
+
+if ($out){
+  close $ofh;
+}
+
+
+#---------------------------------------------------------#
+#                        functions
+#---------------------------------------------------------#
+
+
+
+sub print_example {
+
+print << "E";
+
+# Plot definition:
+#Function:-------Tag,------Tag-:-PlotTitle----------------#
+
+\%TagClasses:    Tool,     NGS
+#---------------------------------------------------------#
+\%PlotRuntime:  T1/T2,      -  : First
+\%PlotRuntime:     T1,   HiSeq : Second
+\%PlotDisc:        T1,      -  : Tool1
+\%PlotDisc:        T2, NovaSeq : Tool2
+\%PlotMemory:   T1/T2,      -  : Memory
+
+
+
+\%FlagClasses: In, Out
+#---------------------------------------------------------#
+#
+# Aplications:
+
+# app:1
+#---------------------------------------------------------#
+
+\%Tags:   T1, HiSeq
+\%Flags:   -i,>
+
+perl tool1.pl -i in -x 100  > out.1
+#---------------------------------------------------------#
+
+# app:2
+#---------------------------------------------------------#
+
+\%Tags:   T2, NovaSeq
+\%Flags:   -i,-o
+
+
+tool2  -x 100 -i in -o out.1
+#---------------------------------------------------------#
+E
+}

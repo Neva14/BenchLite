@@ -8,7 +8,7 @@ my $class = Module::Build->subclass
     code => q{
         sub ACTION_build{
             my $self = shift;
-            $self->do_system('perl ./src/apps/check_requirements.pl');
+            $self->do_system('perl ./src/apps/check.pl');
             $self->SUPER::ACTION_build();
         }
     }
@@ -17,8 +17,8 @@ my $class = Module::Build->subclass
 my $mb = $class->new(
       dist_name       => 'BenchLite',
       dist_version    => '0.01',
-      module_name     => 'Bench::BenchLite',
-      license         => 'MIT',
+      module_name     => 'BenchLite::Core',
+      license         => 'GPL.v3.0',
       dist_author     => 'Robert Bakaric & Neva Skrabar',
 #      script_files    => './bin/build_ppipe',
       configure_requires => {

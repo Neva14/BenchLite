@@ -23,14 +23,16 @@ my @a = ();
 for (my $i = 0; $i<$limit;$i++){
   if ($i%$d == 0){
      @a = ();
+     sleep 1;
   }
   push(@a,$i);
 }
 
+my $tt = int(rand($d));
 
 if ($out){
   open (O, ">", $out) || die "$!";
-  print O "@a[0..1000]";
+  print O "@a[0..$tt]";
   close O;
 }else{
   print  "@a";

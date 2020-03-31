@@ -154,7 +154,7 @@ sub benchmark {
   $script->parse_script($arg);
   $self->{_script_} = $script->get_script();
 
-  print Dumper($self->{_script_});
+  #print Dumper($self->{_script_});
 
   my ($ptout, $out) = ("","");
 
@@ -225,8 +225,10 @@ sub plot {
   my $plot = BenchLite::Plot::Utility->new();
   $plot->{_R_} = $R;
 
-  $plot->plot($select,$data);
+  my $summary = $plot->plot($select,$data);
   $R->stop();
+
+  return $summary;
 }
 
 
@@ -529,126 +531,3 @@ sub _memory_usage() {
 
 
 1;
-
-=pod
-
-##--------------- Testing Parser ----------------#
-
-my @tests = ();
-
-if (-e $par && $par =~/\.bench/){
-  open(I, "<", $par) || die "$!";
-  while(<I>){
-    chomp;
-    next if /#/;
-    push(@tests, $_);
-  }
-  close I;
-}else{
-  @tests = split(";", $par);
-}
-
-
-$flags = "xxx" unless $flags;
-$out = "benchmarks" unless $out;
-$boot = 1 unless $boot;
-
-
-my $t_id = 0;
-my $outlog = '';
-
-
-
-if ( !$logfile ) {
-  my $timestamp = getLoggingTime();
-  $logfile = "logs-$timestamp";
-}
-
-if ( !$outlog ) {
-    $outlog = File::Spec->catfile( $out, $logfile);
-}
-
-
-if ( !-d $out ) {
-    make_path $out or die "Failed to create path: $out";
-}
-if ( !-d $outlog ) {
-    make_path $outlog or die "Failed to create path: $outlog";
-}
-
-
-
-
-## -------------Summary stats
-
-
-print "\nSummary statistics:\n\n";
-
-open (M, "<", "$outlog/$id.mem.log" ) || die "$!";
-open (T, "<","$outlog/$id.ts.log" ) || die "$!";
-
-
-
-my %TooL = ();
-while(<M>){
-  chomp;
-  next if /#/;
-  my @l = split("\t",$_);
-  $TooL{$l[0]}->[0] = $l[2];
-  push(@{$TooL{$l[0]}->[1]},$l[4]);
-  $TooL{$l[0]}->[2]++;
-}
-print "Memory:\nPID\tMeanMem\tSDofMeanMem\t#ofBootstrapIter\tTool\n";
-foreach (keys %TooL){
-  print "$TooL{$_}->[0]\t" . (mean($TooL{$_}->[1])) ."\t".(stddev($TooL{$_}->[1])) ."\t$TooL{$_}->[2]\t$_\n";
-}
-
-
-%TooL = ();
-while(<T>){
-  chomp;
-  next if /#/;
-  my @l = split("\t",$_);
-  $TooL{$l[0]}->[0] = $l[2];
-  push(@{$TooL{$l[0]}->[1]},$l[5]);
-  $TooL{$l[0]}->[2]++;
-  $TooL{$l[0]}->[3] = $l[6];
-  $TooL{$l[0]}->[4] = $l[7];
-}
-print "\nTime/Space:\nPID\tMeanTime\tSDofMeanTime\t#ofBootstrapIter\tTool\n";
-foreach (keys %TooL){
-  print "$TooL{$_}->[0]\t" . (mean($TooL{$_}->[1])) ."\t".(stddev($TooL{$_}->[1])) ."\t$TooL{$_}->[2]\t$TooL{$_}->[3]\t$TooL{$_}->[4]\t$_\n";
-}
-
-close M;
-close T;
-
-
-if ($quite) {
-  rmtree $out || die "$_";
-}
-
-
-
-##   -- Helper Functions --
-
-sub memory_usage() {
-
-    my $pp = shift;
-    my $t = new Proc::ProcessTable;
-    foreach my $got (@{$t->table}) {
-        next unless $got->pid eq $pp;
-        return (sprintf ("%.2f", $got->size / 1000000));
-    }
-
-}
-
-
-sub getLoggingTime {
-
-    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
-    my $nice_timestamp = sprintf ( "%04d%02d%02d_%02d-%02d-%02d", $year+1900,$mon+1,$mday,$hour,$min,$sec);
-    return $nice_timestamp;
-
-}
-=cut

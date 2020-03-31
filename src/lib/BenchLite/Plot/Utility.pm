@@ -26,7 +26,8 @@ use strict;
 use warnings;
 use Data::Dumper;
 use BenchLite::Plot::Runtime;
-
+use BenchLite::Plot::Disc;
+use BenchLite::Plot::Memory;
 
 #---------------------------------------------------------#
 #                      CONSTRUCTOR
@@ -72,13 +73,15 @@ sub plot {
 
 
   my $run_R = BenchLite::Plot::Runtime->new();
-  #my $disc_R = BenchLite::Plot::Disc->new();
-  #my $mem_R = BenchLite::Plot::Memory->new();
+  my $disc_R = BenchLite::Plot::Disc->new();
+  my $mem_R = BenchLite::Plot::Memory->new();
 
 
-  $run_R->{_R_} = $self->{_R_};
+  $run_R->{_R_}  = $self->{_R_};
+  $disc_R->{_R_} = $self->{_R_};
+  $mem_R->{_R_}  = $self->{_R_};
 
-  my ($r,$o,$b) = (0,0,0);
+  my ($r,$d,$m) = (0,0,0);
   my @runs = ();
   my @mems = ();
   my @dscs = ();
@@ -88,29 +91,66 @@ sub plot {
 
     if ($plot eq 'runtime'){
       my @runplots =  sort{ $a <=> $b } keys %{$select->{'plot'}->{$plot}};
-      my $stop = @runplots;
-      my $tr  = $stop % 3;
-      my $st = ($tr==0) ? ($stop-3) : ($stop-$tr);
+      my $stop = $self->_compute_x_lab(@runplots);
       foreach my $rt_plot (@runplots){
-        push(@runs, $run_R->plot($r++, (($r>$st)?(1):(0)), $select->{'plot'}->{$plot}->{$rt_plot}, $data, "Test_$rt_plot\_$r"));
+        push(@runs, $run_R->plot(
+            $r++,
+            (($r>$stop)?(1):(0)),
+            $select->{'plot'}->{$plot}->{$rt_plot},
+            $data,
+            $select->{'plot_name'}->{$plot}->{$rt_plot})
+        );
       }
     }elsif ($plot eq 'disc'){
-
+      my @discplots =  sort{ $a <=> $b } keys %{$select->{'plot'}->{$plot}};
+      my $stop = $self->_compute_x_lab(@discplots);
+      $disc_R->{_x_unit_} = 'B';
+      $disc_R->{_y_unit_} = 'B';
+      foreach my $ds_plot (@discplots){
+        push(@dscs, $disc_R->plot(
+            $d++,
+            (($d>$stop)?(1):(0)),
+            $select->{'plot'}->{$plot}->{$ds_plot},
+            $data,
+            $select->{'plot_name'}->{$plot}->{$ds_plot},
+            $select->{'head'}->{flags}->{0}
+            )
+        );
+      }
     }elsif($plot eq 'memory'){
-
+      my @memplots =  sort{ $a <=> $b } keys %{$select->{'plot'}->{$plot}};
+      my $stop = $self->_compute_x_lab(@memplots);
+      foreach my $mm_plot (@memplots){
+        push(@mems, $mem_R->plot(
+            $m++,
+            (($m>$stop)?(1):(0)),
+            $select->{'plot'}->{$plot}->{$mm_plot},
+            $data,
+            $select->{'plot_name'}->{$plot}->{$mm_plot})
+        );
+      }
     }else{
       print "I do not recognize $plot format\n";
     }
 
   }
 
-
+  my @summary = ();
   # plot
-  $run_R->plot_summary(@runs);
-  #$self->plot_memory();
-  #$self->plot_disc();
+  if (@runs > 0){
+    $run_R->plot_summary(@runs);
+    push (@summary, $run_R->get_summary_stats());
+  }
+  if (@dscs > 0){
+    $disc_R->plot_summary(@dscs);
+    push (@summary, $disc_R->get_summary_stats());
+  }
+  if (@mems > 0){
+    $mem_R->plot_summary(@mems);
+    push (@summary, $mem_R->get_summary_stats());
+  }
 
-  return $self->{_output_};
+  return $self->_make_summary_table(@summary);
 }
 
 
@@ -120,6 +160,44 @@ sub plot {
 #                   Private Methods
 #---------------------------------------------------------#
 
+
+
+sub _make_summary_table{
+
+  my ($self, @arg)  = @_;
+
+
+  my @table = ();
+  my $j = 0;
+
+  foreach my $set (@arg){
+    foreach my $tab (sort keys %{$set}){
+
+      push (@{$table[$j]},"TableName");
+      foreach my $col (sort keys %{$set->{$tab}}){
+        push (@{$table[$j]},$col);
+      }
+      $j++;
+
+      for (my $i = 0; $i < @{$set->{$tab}->{'Identifier'}}; $i++){
+        push (@{$table[$j]},$tab);
+        foreach my $col (sort keys %{$set->{$tab}}){
+          push (@{$table[$j]},$set->{$tab}->{$col}->[$i]);
+        }
+        $j++;
+      }
+    }
+  }
+  return \@table;
+}
+
+sub _compute_x_lab {
+  my ($self,@arr) = @_;
+
+  my $stop = @arr;
+  my $tr  = $stop % 3;
+  return ($tr==0) ? ($stop-3) : ($stop-$tr);
+}
 
 sub _check_R_libs {
 
